@@ -29,15 +29,23 @@ while ($row = $result->fetch_assoc()) {
 // --------------------
 // 3️⃣ Hugging Face API for quiz generation
 // --------------------
-$apiKey = getenv('HUGGINGFACE_API_KEY'); // ✅ reads the token securely
-$prompt = "Generate 5 multiple-choice quiz questions based on these news articles:\n$newsText
-Format:
-1. Question?
-A. Option 1
-B. Option 2
-C. Option 3
-D. Option 4
-Answer: <letter>";
+$prompt = "You are a professional quiz maker. Generate 5 multiple-choice quiz questions based on the following news articles. Each question should be clear, meaningful, and directly related to the news content.
+
+- Provide exactly 4 answer options labeled A, B, C, D.  
+- Only one option should be correct.  
+- Indicate the correct answer at the end.
+
+Format the output exactly like this:
+
+1. [Question text]
+A. [Option A]
+B. [Option B]
+C. [Option C]
+D. [Option D]
+Answer: [letter]
+
+News articles: 
+$newsText"; // $newsText contains titles + descriptions from your DB
 
 // Choose a free Hugging Face model (GPT-Neo or GPT-2)
 $model = "EleutherAI/gpt-neo-125M"; 
