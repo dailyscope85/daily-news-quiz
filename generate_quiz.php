@@ -73,7 +73,7 @@ echo "Quiz generated successfully!\n";
 $ftp_server = getenv('FTP_HOST');
 $ftp_user   = getenv('FTP_USER');
 $ftp_pass   = getenv('FTP_PASS');
-$local_file = "daily_quiz.txt";
+$local_file = "daily_news_quiz.txt";
 $remote_file = "/htdocs/daily_news_quiz.txt"; // adjust if your folder is different
 
 $conn_id = ftp_connect($ftp_server);
