@@ -2,10 +2,10 @@
 // --------------------
 // 1️⃣ Database connection
 // --------------------
-$host = getenv('sql200.infinityfree.com');
-$user = getenv('if0_39884715');
-$pass = getenv('00Oq6VfU9YF');
-$db   = getenv('if0_39884715_XXX');
+$host = getenv('DB_HOST');   // use the secret name
+$user = getenv('DB_USER');
+$pass = getenv('DB_PASS');
+$db   = getenv('DB_NAME');
 
 $conn = new mysqli($host, $user, $pass, $db);
 if ($conn->connect_error) die("DB Connection failed: " . $conn->connect_error);
@@ -76,9 +76,9 @@ echo "Quiz generated!\n";
 // --------------------
 // 5️⃣ Upload quiz to InfinityFree via FTP
 // --------------------
-$ftp_server = getenv('ftpupload.net');
-$ftp_user   = getenv('if0_39884715');
-$ftp_pass   = getenv('00Oq6VfU9YF');
+$ftp_server = getenv('FTP_HOST');
+$ftp_user   = getenv('FTP_USER');
+$ftp_pass   = getenv('FTP_PASS');
 $local_file = "daily_news_quiz.txt";
 $remote_file = "/htdocs/daily_news_quiz.txt"; // adjust if your folder is different
 
