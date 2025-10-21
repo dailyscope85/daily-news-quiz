@@ -40,6 +40,10 @@ for ($i = 0; $i < 5 && $i < count($news); $i++) {
     for ($j = 0; $j < 3 && $j < count($others); $j++) {
         $wrongOptions[] = $others[$j]['title'];
     }
+// If less than 3 wrong options, duplicate some
+while (count($wrongOptions) < 3) {
+    $wrongOptions[] = "Other news option";
+}
 
     // Combine correct + wrong options and shuffle
     $options = $wrongOptions;
