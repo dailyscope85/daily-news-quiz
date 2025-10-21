@@ -2,7 +2,7 @@
 // --------------------
 // 1️⃣ Database connection
 // --------------------
-$host = getenv('DB_HOST');
+$host = getenv('DB_HOST');   // GitHub secret or local testing value
 $user = getenv('DB_USER');
 $pass = getenv('DB_PASS');
 $db   = getenv('DB_NAME');
@@ -25,6 +25,10 @@ while ($row = $result->fetch_assoc()) {
     $news[] = $row;
 }
 
+if (count($news) == 0) {
+    die("No news found in the database.");
+}
+
 // --------------------
 // 3️⃣ Generate 5 quiz questions
 // --------------------
@@ -40,10 +44,11 @@ for ($i = 0; $i < 5 && $i < count($news); $i++) {
     for ($j = 0; $j < 3 && $j < count($others); $j++) {
         $wrongOptions[] = $others[$j]['title'];
     }
-// If less than 3 wrong options, duplicate some
-while (count($wrongOptions) < 3) {
-    $wrongOptions[] = "Other news option";
-}
+
+    // If less than 3 wrong options, fill with placeholders
+    while (count($wrongOptions) < 3) {
+        $wrongOptions[] = "Other news option";
+    }
 
     // Combine correct + wrong options and shuffle
     $options = $wrongOptions;
@@ -68,27 +73,30 @@ while (count($wrongOptions) < 3) {
 // --------------------
 // 4️⃣ Save quiz locally
 // --------------------
-file_put_contents('daily_news_quiz.txt', trim($quizText));
+$local_file = __DIR__ . "/daily_news_quiz.txt";
+file_put_contents($local_file, trim($quizText));
 echo "Quiz generated successfully!\n";
 
 // --------------------
-// 5️⃣ Upload quiz to InfinityFree via FTP (optional)
+// 5️⃣ Upload quiz to InfinityFree via FTP
 // --------------------
 $ftp_server = getenv('FTP_HOST');
 $ftp_user   = getenv('FTP_USER');
 $ftp_pass   = getenv('FTP_PASS');
-$local_file = "daily_news_quiz.txt";
-$remote_file = "/htdocs/daily_news_quiz.txt"; // adjust if your folder is different
+$remote_file = "/htdocs/daily_news_quiz.txt";
 
 $conn_id = ftp_connect($ftp_server);
-$login = ftp_login($conn_id, $ftp_user, $ftp_pass);
+if (!$conn_id) die("Could not connect to FTP server.");
 
-if ($login && ftp_put($conn_id, $remote_file, $local_file, FTP_ASCII)) {
+$login = ftp_login($conn_id, $ftp_user, $ftp_pass);
+if (!$login) die("FTP login failed.");
+
+if (ftp_put($conn_id, $remote_file, $local_file, FTP_ASCII)) {
     echo "Quiz uploaded to InfinityFree successfully!\n";
 } else {
     echo "FTP upload failed.\n";
 }
-ftp_close($conn_id);
 
+ftp_close($conn_id);
 $conn->close();
 ?>
