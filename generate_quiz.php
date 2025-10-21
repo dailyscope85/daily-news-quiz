@@ -2,7 +2,7 @@
 // --------------------
 // 1️⃣ Database connection
 // --------------------
-$host = getenv('DB_HOST');   // use the secret name
+$host = getenv('DB_HOST');
 $user = getenv('DB_USER');
 $pass = getenv('DB_PASS');
 $db   = getenv('DB_NAME');
@@ -11,83 +11,69 @@ $conn = new mysqli($host, $user, $pass, $db);
 if ($conn->connect_error) die("DB Connection failed: " . $conn->connect_error);
 
 // --------------------
-// 2️⃣ Fetch latest 5 news
+// 2️⃣ Fetch latest 10 news
 // --------------------
 $result = $conn->query("
-    SELECT title, description 
+    SELECT title, category 
     FROM news 
     ORDER BY publishedAt DESC 
-    LIMIT 5
+    LIMIT 10
 ");
 
-$newsText = "";
+$news = [];
 while ($row = $result->fetch_assoc()) {
-    $content = $row['description'] ?? '';
-    $newsText .= $row['title'] . " - " . $content . "\n";
+    $news[] = $row;
 }
 
 // --------------------
-// 3️⃣ Hugging Face API for quiz generation
+// 3️⃣ Generate 5 quiz questions
 // --------------------
-$prompt = "You are a professional quiz maker. Generate 5 multiple-choice quiz questions based on the following news articles. Each question should be clear, meaningful, and directly related to the news content.
+shuffle($news); // randomize news for variety
+$quizText = "";
+for ($i = 0; $i < 5 && $i < count($news); $i++) {
+    $correct = $news[$i];
+    
+    // Pick 3 random wrong options from other news
+    $wrongOptions = [];
+    $others = array_filter($news, fn($n) => $n !== $correct);
+    shuffle($others);
+    for ($j = 0; $j < 3 && $j < count($others); $j++) {
+        $wrongOptions[] = $others[$j]['title'];
+    }
 
-- Provide exactly 4 answer options labeled A, B, C, D.  
-- Only one option should be correct.  
-- Indicate the correct answer at the end.
+    // Combine correct + wrong options and shuffle
+    $options = $wrongOptions;
+    $options[] = $correct['title'];
+    shuffle($options);
 
-Format the output exactly like this:
+    // Determine correct letter
+    $letters = ['A','B','C','D'];
+    $correctLetter = '';
+    foreach ($options as $index => $opt) {
+        if ($opt === $correct['title']) $correctLetter = $letters[$index];
+    }
 
-1. [Question text]
-A. [Option A]
-B. [Option B]
-C. [Option C]
-D. [Option D]
-Answer: [letter]
-
-News articles: 
-$newsText"; // $newsText contains titles + descriptions from your DB
-
-// Choose a free Hugging Face model (GPT-Neo or GPT-2)
-$model = "EleutherAI/gpt-neo-125M"; 
-
-$ch = curl_init("https://api-inference.huggingface.co/models/$model");
-curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_HTTPHEADER => [
-        "Authorization: Bearer $apiKey",
-        "Content-Type: application/json"
-    ],
-    CURLOPT_POST => true,
-    CURLOPT_POSTFIELDS => json_encode([
-        "inputs" => $prompt,
-        "parameters" => ["max_new_tokens" => 300]
-    ])
-]);
-$response = curl_exec($ch);
-curl_close($ch);
-
-$data = json_decode($response, true);
-
-// Some Hugging Face responses wrap text differently
-if (isset($data[0]['generated_text'])) {
-    $quizText = $data[0]['generated_text'];
-} else {
-    $quizText = "No quiz generated.";
+    // Build question text
+    $quizText .= ($i+1) . ". Which of the following is a recent news in the category '{$correct['category']}'?\n";
+    foreach ($options as $index => $opt) {
+        $quizText .= $letters[$index] . ". $opt\n";
+    }
+    $quizText .= "Answer: $correctLetter\n\n";
 }
 
 // --------------------
 // 4️⃣ Save quiz locally
 // --------------------
-file_put_contents('daily_quiz.txt', trim($quizText));
-echo "Quiz generated!\n";
+file_put_contents('daily_news_quiz.txt', trim($quizText));
+echo "Quiz generated successfully!\n";
 
 // --------------------
-// 5️⃣ Upload quiz to InfinityFree via FTP
+// 5️⃣ Upload quiz to InfinityFree via FTP (optional)
 // --------------------
 $ftp_server = getenv('FTP_HOST');
 $ftp_user   = getenv('FTP_USER');
 $ftp_pass   = getenv('FTP_PASS');
-$local_file = "daily_news_quiz.txt";
+$local_file = "daily_quiz.txt";
 $remote_file = "/htdocs/daily_news_quiz.txt"; // adjust if your folder is different
 
 $conn_id = ftp_connect($ftp_server);
