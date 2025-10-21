@@ -24,7 +24,7 @@ $news = [];
 while ($row = $result->fetch_assoc()) {
     $news[] = $row;
 }
-
+echo "Found " . count($news) . " news items.\n";
 if (count($news) == 0) {
     die("No news found in the database.");
 }
